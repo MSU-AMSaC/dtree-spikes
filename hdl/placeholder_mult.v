@@ -6,6 +6,8 @@ module placeholder_mult
   ( clk
   , reset
   
+  , en
+
   , x
   , a
 
@@ -15,6 +17,8 @@ module placeholder_mult
   input  wire clk;
   input  wire reset;
   
+  input  wire en;
+
   input  wire signed [WIDTH_X-1 : 0] x;
   input  wire signed [WIDTH_A-1 : 0] a;
   
@@ -23,17 +27,8 @@ module placeholder_mult
   /* module body */
   reg  signed [WIDTH_X + WIDTH_A-1 : 0] product = 0;
 
-  assign y        = product;
-  always @(posedge clk)
-    begin
-      if (reset == 1'b1)
-        begin
-          product <= 0;
-        end 
-      else
-        begin
-          product <= a * x;
-        end
-    end
+  assign y        = (en == 1'b1)
+                  ? a*x
+                  : 0;
 
 endmodule

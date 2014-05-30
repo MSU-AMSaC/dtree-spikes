@@ -33,7 +33,7 @@ module accumulator
   wire       [IN_WIDTH   : 0] right_summand;
   wire       [IN_WIDTH+1 : 0] sum;
 
-  assign y = acc;
+  assign y = acc;//sum;
 
   always @(posedge clk)
     begin
@@ -43,14 +43,7 @@ module accumulator
         end
       else
         begin
-         /* if (load == 1'b1)
-            begin
-              acc <= init;
-            end
-          else
-            begin */
-              acc <= sum[IN_WIDTH : 0];
-/*            end */
+          acc <= sum[IN_WIDTH : 0];
         end
     end
 

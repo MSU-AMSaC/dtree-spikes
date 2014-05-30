@@ -28,13 +28,14 @@ module dtree
 
   wire                             acc_load;
   wire                             acc_add;
-  wire                             load_bias;
 
   wire                             get_next_coeffs;
   wire                             child_direction;
   wire[COEFF_WIDTH-1          : 0] coeff;
   wire                             is_one;
   wire[IN_WIDTH-1             : 0] bias;
+
+  wire                             mult_enable;
   wire[COEFF_WIDTH+IN_WIDTH   : 0] product;
   wire[IN_WIDTH               : 0] summand;
   wire[IN_WIDTH+1             : 0] total;
@@ -52,7 +53,10 @@ module dtree
     , .next            (get_next_coeffs)
     , .child_direction (child_direction)
     
-    , .load_bias       (load_bias)
+    , .load_bias       (acc_load)
+    , .add             (acc_add)
+    , .mult            (mult_enable)
+
     , .coeff           (coeff)
     , .is_one          (is_one)
     , .bias            (bias)
@@ -69,7 +73,9 @@ module dtree
     multiply
     ( .clk   (clk)
     , .reset (reset)
-  
+
+    , .en    (mult_enable)
+
     , .x     (sample)
     , .a     (coeff)
 
@@ -80,10 +86,6 @@ module dtree
                  ? {sample[IN_WIDTH-1], sample}
                  : product[IN_WIDTH+COEFF_WIDTH-1 : COEFF_WIDTH-1];
                  
-  assign acc_load = load_bias;
-  assign acc_add  = (load_bias == 1'b1)
-                  ? is_one
-                  : 1'b1;
   accumulator
    #( .IN_WIDTH (IN_WIDTH+1)
     )

@@ -12,6 +12,9 @@ module control
   , child_direction
   
   , load_bias
+  , add
+  , mult
+
   , coeff
   , is_one
   , bias
@@ -28,6 +31,9 @@ module control
   input  wire child_direction;
   
   output reg                          load_bias;
+  output reg                          add;
+  output reg                          mult;
+
   output wire[COEFF_BIT_DEPTH-1  : 0] coeff;
   output wire                         is_one;
 
@@ -103,7 +109,7 @@ module control
   reg [1                  : 0] child_flags      = 0;
   reg [BIAS_BIT_DEPTH-1   : 0] bias_i           = 0;
   reg [COEFF_BIT_DEPTH-1  : 0] coeff_i          = 0;
-  reg [$clog2(FEATURES)-1 : 0] feature_counter  = 0;
+  reg [$clog2(FEATURES+1)-1 : 0] feature_counter  = 0;
   reg [TREE_HEIGHT-1      : 0] decision_counter = 0;
  
   reg  [FEATURES-1             : 0] is_one_shr  = 0;
@@ -124,6 +130,7 @@ module control
       if (reset == 1'b1)
         begin
           state           <= STATE_READ;
+            mult      = 1'b0;
           node_index      <= 0;
           coeff_index     <= 0;
 
@@ -153,9 +160,10 @@ module control
                     coeff_index <= coeff_index;
                   end 
                 else
-                  begin
+                  begin 
                     coeff_index <= coeff_index + 1;
                   end
+                feature_counter <= feature_counter + 1;
 
                 state <= STATE_INDEX;
               end
@@ -164,18 +172,12 @@ module control
                 child_flags <= child_flags;
                 bias_i      <= bias_i;
                 is_one_shr[FEATURES-1 : 1] <= is_one_shr[FEATURES-2 : 0];
+                is_one_shr[0]              <= 1'b0;
 
                 coeff_i     <= `lookup_coeff(node_index, coeff_index);
-                if (is_one_shr[FEATURES-1] == 1'b1)
-                  begin
-                    coeff_index <= coeff_index;
-                  end 
-                else
-                  begin
-                    coeff_index <= coeff_index + 1;
-                  end
+                coeff_index <= coeff_index + 1;
 
-                if (feature_counter == FEATURES-1)
+                if (feature_counter == FEATURES)
                   begin
                     feature_counter <= 0;
                     state           <= STATE_DECIDE;
@@ -262,7 +264,10 @@ module control
         if (reset == 1'b1)
           begin
             out_valid = 1'b0;
+
             load_bias = 1'b0;
+            add       = 1'b0;
+            mult      = 1'b0;
           end
         else
           begin
@@ -270,24 +275,36 @@ module control
               STATE_READ:
                 begin
                   out_valid = 1'b0;
+
                   load_bias = 1'b0;
+                  add       = 1'b0;
+                  mult      = 1'b0;
                 end
               STATE_INDEX:
                 begin
                   out_valid = 1'b0;
-                  load_bias = (coeff_index == 0) 
+
+                  load_bias = (feature_counter == 1) 
                             ? 1'b1
                             : 1'b0;
+                  add       = 1'b1;
+                  mult      = ~(is_one_shr[FEATURES-1] | (coeff_i == 0));
                 end
               STATE_DECIDE:
                 begin
                   out_valid = 1'b0;
+
                   load_bias = 1'b0;
+                  add       = 1'b0;
+                  mult      = 1'b0;
                 end
               STATE_DONE:
                 begin
                   out_valid = 1'b1;
+
                   load_bias = 1'b0;
+                  add       = 1'b0;
+                  mult      = 1'b0;
                 end
             endcase
           end
