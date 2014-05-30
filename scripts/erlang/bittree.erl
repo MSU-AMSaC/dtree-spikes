@@ -3,20 +3,29 @@
 
 -include_lib("include/noderec.hrl").
 
+one_hot_one_pos([])    -> <<>>;
+one_hot_one_pos([H|T]) ->
+  Rest = one_hot_one_pos(T),
+  if
+    (H == 1) -> << 1:1, Rest/bitstring >>;
+    (H /= 1) -> << 0:1, Rest/bitstring >>
+  end.
+
 flatten(#node{ left_child  = LChild
              , right_child = RChild
              , coeffs      = Coeffs
              , bias        = Bias
              },
         CoeffRes) ->
-  OnePos = string:str(Coeffs, [0])-1,
+  OnePos = one_hot_one_pos(Coeffs),
   FracCoeffs = [ X || X <- Coeffs, X /= 1],
   Quantized  = lists:map(fun(X) -> round(X * (1 bsl CoeffRes)) end, 
                          FracCoeffs),
+  io:write(io:format("~p", [Quantized])),
   CoeffBits  = << << X:CoeffRes >> || X <- Quantized >>, 
   << LChild:1
    , RChild:1
-   , OnePos:(length(Coeffs))
+   , OnePos/bitstring
    , CoeffBits/bitstring
    , Bias:10
    , 0:1

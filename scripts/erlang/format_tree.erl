@@ -23,28 +23,28 @@ build_tree() ->
     [ 
     {1, #node{ left_child  = 1
              , right_child = 1
-             , coeffs      = [0, 10, 7]
+             , coeffs      = [1, -0.335, 0.47]
              , bias        = 507
              }},
   
     {2, #node{ left_child  = 0
              , right_child = 1
-             , coeffs      = [4, 9, 0]
+             , coeffs      = [0.27, -0.4, 1]
              , bias        = 130
              }},
     {3, #node{ left_child  = 1
              , right_child = 0
-             , coeffs      = [14, 0, 3]
+             , coeffs      = [-0.57, 1, 0.2]
              , bias        = 880
              }},
     {4, #node{ left_child  = 0
              , right_child = 0
-             , coeffs      = [5, 0, 7]
+             , coeffs      = [0.33, 1, 0.47]
              , bias        = 200
              }},
     {5, #node{ left_child  = 0
              , right_child = 0
-             , coeffs      = [0, 4, 1]
+             , coeffs      = [1, 0.27, -0.4]
              , bias        = 300
              }}
     ]).
