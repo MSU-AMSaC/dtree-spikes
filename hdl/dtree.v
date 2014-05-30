@@ -26,7 +26,10 @@ module dtree
   /* module body */
   reg[$clog2(FEATURES)-1 : 0] cycle_counter = 0;
 
-  wire                             load_acc;
+  wire                             acc_load;
+  wire                             acc_add;
+  wire                             load_bias;
+
   wire                             get_next_coeffs;
   wire                             child_direction;
   wire[COEFF_WIDTH-1          : 0] coeff;
@@ -49,6 +52,7 @@ module dtree
     , .next            (get_next_coeffs)
     , .child_direction (child_direction)
     
+    , .load_bias       (load_bias)
     , .coeff           (coeff)
     , .is_one          (is_one)
     , .bias            (bias)
@@ -76,17 +80,23 @@ module dtree
                  ? {sample[IN_WIDTH-1], sample}
                  : product[IN_WIDTH+COEFF_WIDTH-1 : COEFF_WIDTH-1];
                  
+  assign acc_load = load_bias;
+  assign acc_add  = (load_bias == 1'b1)
+                  ? is_one
+                  : 1'b1;
   accumulator
    #( .IN_WIDTH (IN_WIDTH+1)
     )
     accumulate
     ( .clk      (clk)
     , .reset    (reset)
-  
+
+    , .load     (acc_load)
+    , .add      (acc_add)
+
     , .init     ({ {2{bias[IN_WIDTH-1]}}
                  , bias
                  })
-    , .load     (load_acc)
     , .a        (summand)
   
     , .y        (total)

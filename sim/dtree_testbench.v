@@ -4,7 +4,7 @@ module dtree_testbench
   );
 
 reg clk   = 1'b0;
-reg reset = 1'b0;
+reg reset = 1'b1;
 
 reg  [9 : 0] sample = 0;
 wire [1 : 0] level;
@@ -22,7 +22,6 @@ end
 
 initial
 begin
-  #500 reset = 1'b1;
   #500 reset = 1'b0;
 end
 

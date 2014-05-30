@@ -5,8 +5,10 @@ module accumulator
   ( clk
   , reset
 
-  , init
   , load
+  , add
+
+  , init
   , a
 
   , y
@@ -16,14 +18,19 @@ module accumulator
   input  wire clk;
   input  wire reset;
   
+  input  wire                 load;
+  input  wire                 add;
+
   input  wire[IN_WIDTH   : 0] init;
-  input  wire              load;
   input  wire[IN_WIDTH-1 : 0] a;
   
   output wire[IN_WIDTH   : 0] y;
   output wire              overflow;
 
   reg        [IN_WIDTH   : 0] acc = 0;
+
+  wire       [IN_WIDTH   : 0] left_summand;
+  wire       [IN_WIDTH   : 0] right_summand;
   wire       [IN_WIDTH+1 : 0] sum;
 
   assign y = acc;
@@ -36,23 +43,29 @@ module accumulator
         end
       else
         begin
-          if (load == 1'b1)
+         /* if (load == 1'b1)
             begin
               acc <= init;
             end
           else
-            begin
+            begin */
               acc <= sum[IN_WIDTH : 0];
-            end
+/*            end */
         end
     end
 
+  assign left_summand  = (load == 1'b1)
+                       ? init
+                       : acc;
+  assign right_summand = (add  == 1'b1)
+                       ? {a[IN_WIDTH-1], a} /* sign extension */
+                       : {IN_WIDTH{1'b0}};
   adder 
    #( .IN_WIDTH (IN_WIDTH+1)
     )
    adder_instance
-   ( .a (acc)
-   , .b ({a[IN_WIDTH-1], a}) /* sign extension */
+   ( .a (left_summand)
+   , .b (right_summand) 
 
    , .y (sum)
    , .v (overflow)
