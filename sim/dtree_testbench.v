@@ -6,6 +6,13 @@ module dtree_testbench
 reg clk   = 1'b0;
 reg reset = 1'b1;
 
+integer infile;
+integer infile_status;
+integer outfile;
+integer outfile_status;
+integer i;
+
+reg  [9 : 0] in_sample = 0;
 reg  [9 : 0] sample = 0;
 wire [1 : 0] level;
 wire [1 : 0] path;
@@ -25,6 +32,12 @@ begin
   #500 reset = 1'b0;
 end
 
+initial
+begin
+  infile  = $fopen("E1_02.txt",       "r");
+  outfile = $fopen("easy_output.txt", "w");
+end
+
   always @(posedge clk)
     begin
       if (reset == 1'b1)
@@ -33,13 +46,16 @@ end
         end
       else
         begin
-          if (sample == {10{1'b1}})
+          infile_status = $fscanf(infile, "%d", in_sample);
+          if (!$feof(infile))
             begin
-              sample <= 0;
+              sample <= in_sample;
             end
-          else
+          if (out_valid == 1'b1)
             begin
-              sample <= sample + 1;
+              $fwrite(outfile, "%d ", level);
+              $fwrite(outfile, "%b",  path);
+              $fwrite(outfile, "\n");
             end
         end
     end
