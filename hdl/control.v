@@ -107,8 +107,8 @@ module control
   reg                               first_cycle  = 1'b1;
   reg                               done         = 1'b0;
 
-  wire [1                  : 0] child_flags;
-  reg                          child_valid;
+  wire [1                      : 0] child_flags;
+  reg                               child_valid;
 
   wire [BIAS_BIT_DEPTH-1     : 0] bias_i;
   wire [COEFF_BIT_DEPTH-1    : 0] coeff_i;
@@ -127,9 +127,6 @@ module control
   wire [FEATURES-1             : 0] stored_one_pos;
 
   assign ready      = ~reset;
-  assign coeff      = coeff_i;
-  assign bias       = bias_i;  
-
   assign level      = final_depth;
   assign path       = path_i;
   assign out_valid  = done;
@@ -156,9 +153,10 @@ module control
 
 
   assign child_flags    = coeff_mem_d[`lookup_child_flags];
-  assign bias_i         = coeff_mem_d[`lookup_bias];
+  assign bias           = coeff_mem_d[`lookup_bias];
   assign stored_one_pos = coeff_mem_d[`lookup_one_pos];
   assign coeff_i        = coeff_mem_d[`lookup_coeff(coeff_index)];
+  assign coeff          = coeff_i;
 
   assign is_one         = | (stored_one_pos & is_one_shr);
 
