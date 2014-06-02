@@ -13,6 +13,7 @@ integer outfile_status;
 integer i;
 
 reg  [9 : 0] in_sample = 0;
+wire         ready;
 reg  [9 : 0] sample = 0;
 wire [1 : 0] level;
 wire [1 : 0] path;
@@ -57,16 +58,19 @@ end
         end
       else
         begin
-          infile_status = $fscanf(infile, "%d", in_sample);
-          if (!$feof(infile))
+          if (ready == 1'b1)
             begin
-              sample <= in_sample;
-            end
-          if (out_valid == 1'b1)
-            begin
-              $fwrite(outfile, "%d ", level);
-              $fwrite(outfile, "%b",  path);
-              $fwrite(outfile, "\n");
+              infile_status = $fscanf(infile, "%d", in_sample);
+              if (!$feof(infile))
+                begin
+                  sample <= in_sample;
+                end
+              if (out_valid == 1'b1)
+                begin
+                  $fwrite(outfile, "%d ", level);
+                  $fwrite(outfile, "%b",  path);
+                  $fwrite(outfile, "\n");
+                end
             end
         end
     end
@@ -79,7 +83,8 @@ end
     dut
     ( .clk       (clk)
     , .reset     (reset)
-  
+
+    , .ready     (ready)  
     , .sample    (sample)
   
     , .level     (level)

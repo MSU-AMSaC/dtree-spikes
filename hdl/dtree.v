@@ -7,6 +7,7 @@ module dtree
   ( clk
   , reset
 
+  , ready
   , sample
 
   , level
@@ -17,6 +18,7 @@ module dtree
   input  wire clk;
   input  wire reset;
 
+  output wire                         ready;
   input  wire[IN_WIDTH-1         : 0] sample;
 
   output wire[$clog2(FEATURES)-1 : 0] level;
@@ -52,7 +54,8 @@ module dtree
   
     , .next            (get_next_coeffs)
     , .child_direction (child_direction)
-    
+
+    , .ready           (ready)    
     , .load_bias       (acc_load)
     , .add             (acc_add)
     , .mult            (mult_enable)
