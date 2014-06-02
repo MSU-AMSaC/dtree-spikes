@@ -21,7 +21,7 @@ flatten(#node{ left_child  = LChild
   FracCoeffs = [ X || X <- Coeffs, X /= 1],
   Quantized  = lists:map(fun(X) -> round(X * (1 bsl CoeffRes)) end, 
                          FracCoeffs),
-  io:write(io:format("~p", [Quantized])),
+  % io:write(io:format("~p", [Quantized])),
   CoeffBits  = << << X:CoeffRes >> || X <- Quantized >>, 
   << LChild:1
    , RChild:1
