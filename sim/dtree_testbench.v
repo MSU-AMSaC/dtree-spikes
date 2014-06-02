@@ -18,6 +18,8 @@ wire [1 : 0] level;
 wire [1 : 0] path;
 wire         out_valid;
 
+integer reset_counter = 0;
+
 initial
 begin
   clk = 1'b0;
@@ -29,14 +31,23 @@ end
 
 initial
 begin
-  #500 reset = 1'b0;
-end
-
-initial
-begin
   infile  = $fopen("E1_02.txt",       "r");
   outfile = $fopen("easy_output.txt", "w");
 end
+
+  always @(posedge clk)
+    begin
+      if (reset_counter >= 20)
+        begin
+          reset_counter <= 20;
+          reset <= 1'b0;
+        end
+      else
+        begin
+          reset_counter <= reset_counter + 1;
+          reset <= 1'b1;
+        end
+    end
 
   always @(posedge clk)
     begin

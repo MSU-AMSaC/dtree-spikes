@@ -104,6 +104,9 @@ module control
 
   reg [$clog2(STATE_INDEX)-1 : 0] state = STATE_DECIDE;
 
+  reg                               first_cycle = 1'b1;
+  reg                               done        = 1'b0;
+
   reg [1                  : 0] child_flags      = 0;
   reg                          child_valid;
 
@@ -115,7 +118,6 @@ module control
  
   reg  [FEATURES-1             : 0] is_one_shr  = 0;
   reg  [FEATURES-1             : 0] path_i      = 0;
-  reg                               done        = 1'b0;
   wire [FEATURES-1             : 0] stored_one_pos;
 
   assign coeff      = coeff_i;
@@ -124,7 +126,7 @@ module control
 
   assign level      = final_depth;
   assign path       = path_i;
-  assign out_valid  = done;
+  assign out_valid  = done & ~first_cycle;
 
   assign stored_one_pos = `lookup_one_pos(node_index);
 
@@ -132,7 +134,9 @@ module control
     begin
       if (reset == 1'b1)
         begin
-          done  <= 1'b0;
+          first_cycle <= 1'b1;
+          done        <= 1'b0;
+
           state <= STATE_DECIDE;
 
           coeff_index      <= 0;
@@ -157,7 +161,16 @@ module control
                   begin
                     final_depth      <= decision_counter;
                     decision_counter <= 0;
-                    done  <= 1'b1;
+
+                    if (first_cycle == 1'b1)
+                      begin
+                        first_cycle <= 1'b0;
+                        done <= 1'b0;
+                      end 
+                    else
+                      begin
+                        done  <= 1'b1;
+                      end
                   end
 
                 path_i[decision_counter] <= child_direction;
@@ -193,6 +206,11 @@ module control
                     state           <= STATE_INDEX;
                   end
               end
+            default:
+              begin
+                done  <= 1'b0;
+                state <= STATE_DECIDE;
+              end
           endcase
         end
     end
@@ -227,7 +245,7 @@ module control
                     2'b11:   child_valid = 1'b1;
                     default: child_valid = 1'b0;
                   endcase
-
+                  
                   if (child_valid == 1'b1)
                     begin
                       if (decision_counter == 0)
@@ -243,7 +261,7 @@ module control
                     begin
                       node_index <= 0;
                     end
-                end
+                  end
               STATE_INDEX:
                 begin
                   load_bias = (feature_counter == 1) 
