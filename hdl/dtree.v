@@ -107,6 +107,6 @@ module dtree
     , .y        (total)
     , .overflow (overflow)
     );
-  assign child_direction = ~total[IN_WIDTH]; /* extract sign bit */
+  assign child_direction = total[IN_WIDTH]; /* extract sign bit */
   
 endmodule
