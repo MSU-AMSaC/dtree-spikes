@@ -4,6 +4,7 @@ module control
   , parameter COEFF_BIT_DEPTH = 4
   , parameter BIAS_BIT_DEPTH  = 10
   , parameter MAX_CLUSTERS    = 5
+  , parameter CHANNEL_COUNT   = 16
   )
   ( clk
   , reset
@@ -94,8 +95,9 @@ module control
      -: BIAS_BIT_DEPTH
 
   localparam TREE_HEIGHT = $clog2(MAX_CLUSTERS);
-  reg [TREE_HEIGHT-1        : 0] node_index;
-  reg [$clog2(FEATURES-1)-1 : 0] coeff_index = 0;
+  reg [TREE_HEIGHT-1           : 0] node_index  = 0;
+  reg [$clog2(CHANNEL_COUNT)-1 : 0] ch_index    = 0;
+  reg [$clog2(FEATURES-1)-1    : 0] coeff_index = 0;
     
   localparam STATE_DECIDE = 0
            , STATE_INDEX  = 1
@@ -119,7 +121,7 @@ module control
 
   wire                              coeff_mem_ce;
   wire                              coeff_mem_we;
-  wire [$clog2(MAX_CLUSTERS)-1 : 0] coeff_mem_a;
+  wire [$clog2(MAX_CLUSTERS*CHANNEL_COUNT)-1 : 0] coeff_mem_a;
   wire [23:0]                       coeff_mem_d;
 
   reg  [FEATURES-1             : 0] is_one_shr  = 0;
@@ -131,11 +133,13 @@ module control
   assign path       = path_i;
   assign out_valid  = done;
 
-  assign coeff_mem_ce = 1'b1;
-  assign coeff_mem_we = 1'b0;
+  assign coeff_mem_ce   = 1'b1;
+  assign coeff_mem_we   = 1'b0;
+  assign coeff_mem_a    = ch_index*MAX_CLUSTERS + node_index;
+
   memory_model
     #( .DEPTH           (24)
-     , .WORDS           (MAX_CLUSTERS)
+     , .WORDS           (MAX_CLUSTERS*CHANNEL_COUNT)
      , .FEATURES        (FEATURES)
      , .COEFF_BIT_DEPTH (COEFF_BIT_DEPTH)
      , .BIAS_BIT_DEPTH  (BIAS_BIT_DEPTH)
@@ -146,11 +150,9 @@ module control
 
      , .ce    (coeff_mem_ce)
      , .we    (coeff_mem_we)
-     , .a     (node_index)
+     , .a     (coeff_mem_a)
      , .d     (coeff_mem_d)
      );
-
-
 
   assign child_flags    = coeff_mem_d[`lookup_child_flags];
   assign bias           = coeff_mem_d[`lookup_bias];

@@ -1,7 +1,6 @@
 `default_nettype none
-module dtree_testbench
-  (
-  );
+`timescale 1ns/1ps
+module dtree_testbench;
 
 reg clk   = 1'b0;
 reg reset = 1'b1;
