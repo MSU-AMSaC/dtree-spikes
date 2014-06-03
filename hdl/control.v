@@ -125,6 +125,7 @@ module control
   wire [23:0]                       coeff_mem_d;
 
   reg  [FEATURES-1             : 0] is_one_shr  = 0;
+  wire                              is_one_i;
   reg  [FEATURES-1             : 0] path_i      = 0;
   wire [FEATURES-1             : 0] stored_one_pos;
 
@@ -160,7 +161,8 @@ module control
   assign coeff_i        = coeff_mem_d[`lookup_coeff(coeff_index)];
   assign coeff          = coeff_i;
 
-  assign is_one         = | (stored_one_pos & is_one_shr);
+  assign is_one_i       = | (stored_one_pos & is_one_shr);
+  assign is_one         = is_one_i;
 
   always @(posedge clk)
     begin
@@ -296,7 +298,7 @@ module control
                             ? 1'b1
                             : 1'b0;
                   add       = 1'b1;
-                  mult      = ~(is_one_shr[FEATURES-1] | (coeff_i == 0));
+                  mult      = ~(is_one_i | (coeff_i == 0));
                 end
               default:
                 begin

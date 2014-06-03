@@ -6,9 +6,9 @@ def main(lfname, rfname):
   rf = open(rfname, "r")
   
   depth = 1
-  classes   = { 1 : (0, "00")
-              , 2 : (1, "11")
-              , 3 : (1, "10")
+  classes   = { 1 : (1, "00")
+              , 2 : (0, "01")
+              , 3 : (1, "01")
               }
   rindex    = 0
   i, errors = 0, 0
@@ -35,7 +35,7 @@ def main(lfname, rfname):
     i += 1
 
   print "%d classification errors (%f%%) over %d data points." % (errors, 
-                                                                  float(errors)/i, 
+                                                                  100*float(errors)/i, 
                                                                   i)
 
 if __name__ == "__main__":

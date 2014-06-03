@@ -31,8 +31,8 @@ end
 
 initial
 begin
-  infile  = $fopen("E1_02.txt",       "r");
-  outfile = $fopen("easy_output.txt", "w");
+  infile  = $fopen("D2_015.txt",       "r");
+  outfile = $fopen("diff_output.txt", "w");
 end
 
   always @(posedge clk)
