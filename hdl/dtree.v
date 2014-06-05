@@ -7,6 +7,7 @@ module dtree
   ( clk
   , reset
 
+  , in_valid
   , ready
   , sample
 
@@ -18,6 +19,7 @@ module dtree
   input  wire clk;
   input  wire reset;
 
+  input  wire                         in_valid;
   output wire                         ready;
   input  wire[IN_WIDTH-1         : 0] sample;
 
@@ -26,7 +28,11 @@ module dtree
   output wire                         out_valid;
   
   /* module body */
-  reg[$clog2(FEATURES)-1 : 0] cycle_counter = 0;
+  reg                          data_valid = 1'b0;
+  reg [$clog2(FEATURES)-1 : 0] cycle_counter = 0;
+
+  reg [IN_WIDTH-1         : 0] sample_register [0 : 1];
+  reg [IN_WIDTH-1         : 0] multiplicand_register = 0;
 
   wire                             acc_load;
   wire                             acc_add;
@@ -35,10 +41,16 @@ module dtree
   wire                             child_direction;
   wire[COEFF_WIDTH-1          : 0] coeff;
   wire                             is_one;
+  reg                              is_one_register = 1'b0;
   wire[IN_WIDTH-1             : 0] bias;
 
   wire                             mult_enable;
   wire[COEFF_WIDTH+IN_WIDTH   : 0] product;
+  wire[IN_WIDTH               : 0] scaled_product;
+  wire[IN_WIDTH+1             : 0] product_plus_sample;
+  wire                             prod_plus_sample_overflow;
+
+  reg [IN_WIDTH               : 0] summand_register;
   wire[IN_WIDTH               : 0] summand;
   wire[IN_WIDTH+1             : 0] total;
   wire                             overflow;
@@ -52,7 +64,7 @@ module dtree
     ( .clk             (clk)
     , .reset           (reset)
   
-    , .next            (get_next_coeffs)
+    , .in_valid        (data_valid)
     , .child_direction (child_direction)
 
     , .ready           (ready)    
@@ -69,25 +81,52 @@ module dtree
     , .out_valid       (out_valid)
     );
 
+  always @(posedge clk)
+    begin
+      if (reset == 1'b1)
+        begin
+          data_valid         <= 1'b0;
+          sample_register[0] <= 0;
+          sample_register[1] <= 0;
+        end
+      else
+        begin
+          data_valid         <= 1'b1;
+          if (in_valid == 1'b1)
+            begin
+              sample_register[0] <= sample;
+              sample_register[1] <= sample_register[0];
+            end
+
+          if (mult_enable == 1'b1)
+            begin
+              multiplicand_register <= sample_register[0];
+              summand_register <= sample;
+            end
+          else
+            begin
+              summand_register <= sample_register[0];
+            end
+
+          is_one_register <= is_one;
+        end
+    end
+
   placeholder_mult
    #( .WIDTH_X(IN_WIDTH)
     , .WIDTH_A(COEFF_WIDTH)
     )
     multiply
-    ( .clk   (clk)
-    , .reset (reset)
-
-    , .en    (mult_enable)
-
-    , .x     (sample)
+    ( .x     (multiplicand_register)
     , .a     (coeff)
 
     , .y     (product)
     );
+  assign scaled_product = product[IN_WIDTH+COEFF_WIDTH-1 : COEFF_WIDTH-1];
 
   assign summand = (is_one == 1'b1)
-                 ? {sample[IN_WIDTH-1], sample}
-                 : product[IN_WIDTH+COEFF_WIDTH-1 : COEFF_WIDTH-1];
+                 ? summand_register//sample_register[0]
+                 : scaled_product;
                  
   accumulator
    #( .IN_WIDTH (IN_WIDTH+1)

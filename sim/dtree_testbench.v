@@ -1,6 +1,8 @@
 `default_nettype none
 `timescale 1ns/1ps
-module dtree_testbench;
+module dtree_testbench
+ #( parameter FEATURES = 3
+  );
 
 reg clk   = 1'b0;
 reg reset = 1'b1;
@@ -10,9 +12,11 @@ integer infile_status;
 integer outfile;
 integer outfile_status;
 integer i;
+integer sample_count = 0;
 
 reg  [9 : 0] in_sample = 0;
 wire         ready;
+reg          valid = 1'b0;
 reg  [9 : 0] sample = 0;
 wire [1 : 0] level;
 wire [1 : 0] path;
@@ -53,12 +57,26 @@ end
     begin
       if (reset == 1'b1)
         begin
+          valid  <= 1'b0;
+          sample_count <= 0;
           sample <= 0;
         end
       else
         begin
           if (ready == 1'b1)
             begin
+              if (sample_count == FEATURES)
+                begin
+                  valid <= 1'b0;
+                  sample_count <= 0;
+                end
+              else
+                begin
+                  valid <= 1'b1;
+                  sample_count <= sample_count + 1;
+                end
+
+
               infile_status = $fscanf(infile, "%d", in_sample);
               if (!$feof(infile))
                 begin
@@ -70,6 +88,11 @@ end
                   $fwrite(outfile, "%b",  path);
                   $fwrite(outfile, "\n");
                 end
+            end
+          else
+            begin
+              valid <= 1'b0;
+              sample_count <= sample_count;
             end
         end
     end
@@ -83,7 +106,8 @@ end
     ( .clk       (clk)
     , .reset     (reset)
 
-    , .ready     (ready)  
+    , .ready     (ready)
+    , .in_valid  (valid)
     , .sample    (sample)
   
     , .level     (level)
