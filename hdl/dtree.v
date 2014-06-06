@@ -39,18 +39,22 @@ module dtree
 
   wire                             get_next_coeffs;
   wire                             child_direction;
+
+  wire                             node_valid;
   wire[COEFF_WIDTH-1          : 0] coeff;
   wire                             is_one;
+  wire                             is_zero;
   reg                              is_one_register = 1'b0;
   wire[IN_WIDTH-1             : 0] bias;
 
   wire                             mult_enable;
+  reg                              mult_en_register = 1'b0;
   wire[COEFF_WIDTH+IN_WIDTH   : 0] product;
   wire[IN_WIDTH               : 0] scaled_product;
   wire[IN_WIDTH+1             : 0] product_plus_sample;
   wire                             prod_plus_sample_overflow;
 
-  reg [IN_WIDTH               : 0] summand_register;
+  reg [IN_WIDTH               : 0] summand_register = 0;
   wire[IN_WIDTH               : 0] summand;
   wire[IN_WIDTH+1             : 0] total;
   wire                             overflow;
@@ -72,8 +76,10 @@ module dtree
     , .add             (acc_add)
     , .mult            (mult_enable)
 
+    , .node_valid      (node_valid)
     , .coeff           (coeff)
     , .is_one          (is_one)
+    , .is_zero         (is_zero)
     , .bias            (bias)
   
     , .level           (level)
@@ -88,26 +94,33 @@ module dtree
           data_valid         <= 1'b0;
           sample_register[0] <= 0;
           sample_register[1] <= 0;
+          mult_en_register   <= 1'b0;
         end
       else
         begin
           data_valid         <= 1'b1;
+          mult_en_register   <= mult_enable;
           if (in_valid == 1'b1)
             begin
               sample_register[0] <= sample;
               sample_register[1] <= sample_register[0];
             end
 
-          if (mult_enable == 1'b1)
+          if (is_zero == 1'b0)
             begin
-              multiplicand_register <= sample_register[0];
-              summand_register <= sample;
+              if (mult_enable == 1'b1)
+                begin
+                  multiplicand_register <= sample_register[0];
+                end
+              else
+                begin
+                  if (node_valid == 1'b1)
+                    begin
+                      summand_register <= sample_register[0];
+                    end
+                end
             end
-          else
-            begin
-              summand_register <= sample_register[0];
-            end
-
+         
           is_one_register <= is_one;
         end
     end
@@ -124,9 +137,13 @@ module dtree
     );
   assign scaled_product = product[IN_WIDTH+COEFF_WIDTH-1 : COEFF_WIDTH-1];
 
-  assign summand = (is_one == 1'b1)
-                 ? summand_register//sample_register[0]
-                 : scaled_product;
+  assign summand = (mult_en_register == 1'b1)
+                   ? scaled_product
+                   : ((is_one == 1'b1)
+                     ? sample
+                     : summand_register
+                     )
+                   ;
                  
   accumulator
    #( .IN_WIDTH (IN_WIDTH+1)

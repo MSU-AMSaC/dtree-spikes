@@ -17,8 +17,10 @@ module control
   , add
   , mult
 
+  , node_valid
   , coeff
   , is_one
+  , is_zero
   , bias
 
   , level
@@ -37,9 +39,10 @@ module control
   output reg                          add;
   output wire                         mult;
 
+  output reg                          node_valid;
   output wire[COEFF_BIT_DEPTH-1  : 0] coeff;
   output wire                         is_one;
-
+  output wire                         is_zero;
   output wire[BIAS_BIT_DEPTH-1   : 0] bias;
   
   output wire[$clog2(FEATURES)-1 : 0] level;
@@ -115,6 +118,7 @@ module control
 
   reg  [FEATURES-1             : 0] is_one_shr  = 0;
   wire                              is_one_i;
+  reg                               is_zero_i;
   reg  [FEATURES-1             : 0] path_i      = 0;
   wire [FEATURES-1             : 0] stored_one_pos;
   wire [COEFF_BIT_DEPTH-1      : 0] stored_coeff;
@@ -154,6 +158,7 @@ module control
 
   assign is_one_i       = | (stored_one_pos & is_one_shr);
   assign is_one         = is_one_i;
+  assign is_zero        = is_zero_i;
 
   always @(posedge clk)
     begin
@@ -266,9 +271,11 @@ module control
       begin
         if (reset == 1'b1)
           begin
-            load_bias = 1'b0;
-            add       = 1'b0;
-            mult_i    = 1'b0;
+            node_valid = 1'b0;
+            is_zero_i  = 1'b0;
+            load_bias  = 1'b0;
+            add        = 1'b0;
+            mult_i     = 1'b0;
 
             child_valid = 1'b0;
           end
@@ -285,27 +292,34 @@ module control
             case (state)
               STATE_DECIDE:
                 begin
-                  load_bias = 1'b0;
-                  add       = 1'b0;
-                  mult_i    = 1'b0;
+                  node_valid = 1'b0;
+                  is_zero_i  = 1'b0;
+                  load_bias  = 1'b0;
+                  add        = 1'b0;
+                  mult_i     = 1'b0;
                 end
 
               STATE_INDEX:
                 begin
-                  load_bias = (feature_counter == 0) 
-                            ? 1'b1
-                            : 1'b0;
-                  add       = is_one_i 
-                            | ((feature_counter != 0) && (stored_coeff != 0));
-                  mult_i    = ~is_one_i 
-                            & (stored_coeff != 0)
-                            & (feature_counter != FEATURES);
+                  node_valid = 1'b1;
+                  is_zero_i  = (stored_coeff == 0)
+                             & ~is_one_i;
+                  load_bias  = (feature_counter == 0) 
+                             ? 1'b1
+                             : 1'b0;
+                  add        = is_one_i 
+                             | (feature_counter != 0)
+                             & ~is_zero;
+                  mult_i     = ~is_one_i 
+                             & ~is_zero
+                             & (feature_counter != FEATURES);
                 end
               default:
                 begin
-                  load_bias = 1'b0;
-                  add       = 1'b0;
-                  mult_i    = 1'b0;
+                  node_valid = 1'b0;
+                  load_bias  = 1'b0;
+                  add        = 1'b0;
+                  mult_i     = 1'b0;
                 end
             endcase
           end
