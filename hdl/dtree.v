@@ -31,7 +31,7 @@ module dtree
   reg                          data_valid = 1'b0;
   reg [$clog2(FEATURES)-1 : 0] cycle_counter = 0;
 
-  reg [IN_WIDTH-1         : 0] sample_register [0 : 1];
+  reg [IN_WIDTH-1         : 0] sample_register;
   reg [IN_WIDTH-1         : 0] multiplicand_register = 0;
 
   wire                             acc_load;
@@ -92,8 +92,7 @@ module dtree
       if (reset == 1'b1)
         begin
           data_valid         <= 1'b0;
-          sample_register[0] <= 0;
-          sample_register[1] <= 0;
+          sample_register <= 0;
           mult_en_register   <= 1'b0;
         end
       else
@@ -102,21 +101,22 @@ module dtree
           mult_en_register   <= mult_enable;
           if (in_valid == 1'b1)
             begin
-              sample_register[0] <= sample;
-              sample_register[1] <= sample_register[0];
+              sample_register <= sample;
             end
 
           if (is_zero == 1'b0)
             begin
               if (mult_enable == 1'b1)
                 begin
-                  multiplicand_register <= sample_register[0];
+                  multiplicand_register <= sample_register;
                 end
               else
                 begin
                   if (node_valid == 1'b1)
                     begin
-                      summand_register <= sample_register[0];
+                      /* sign extend */
+                      summand_register <= {sample_register[IN_WIDTH-1]
+                                          , sample_register};
                     end
                 end
             end
@@ -135,7 +135,7 @@ module dtree
 
     , .y     (product)
     );
-  assign scaled_product = product[IN_WIDTH+COEFF_WIDTH-1 : COEFF_WIDTH-1];
+  assign scaled_product = product[IN_WIDTH+COEFF_WIDTH-1 -: IN_WIDTH];
 
   assign summand = (mult_en_register == 1'b1)
                    ? scaled_product

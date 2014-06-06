@@ -41,7 +41,7 @@ module memory_model
 
   initial
   begin
-    $readmemh("tree.txt", coeff_memory);
+    $readmemh("diff_tree.txt", coeff_memory);
   end
 
   always @(posedge clk)

@@ -123,7 +123,8 @@ module control
   wire [FEATURES-1             : 0] stored_one_pos;
   wire [COEFF_BIT_DEPTH-1      : 0] stored_coeff;
 
-  assign ready      = ~reset;
+  assign ready      = ~reset
+                    & (is_zero_i | is_one_i | (feature_counter == 0));
   assign level      = final_depth;
   assign path       = path_i;
   assign out_valid  = done;
@@ -309,9 +310,9 @@ module control
                              : 1'b0;
                   add        = is_one_i 
                              | (feature_counter != 0)
-                             & ~is_zero;
+                             & ~(stored_coeff == 0);
                   mult_i     = ~is_one_i 
-                             & ~is_zero
+                             & ~(stored_coeff == 0)
                              & (feature_counter != FEATURES);
                 end
               default:
