@@ -18,9 +18,11 @@ reg  [9 : 0] in_sample = 0;
 wire         ready;
 reg          valid = 1'b0;
 reg  [9 : 0] sample = 0;
+reg  [9 : 0] samples [0 : FEATURES-1];
 wire [1 : 0] level;
 wire [1 : 0] path;
 wire         out_valid;
+reg          features_loaded = 1'b0;
 
 integer reset_counter = 0;
 
@@ -60,6 +62,7 @@ end
           valid  <= 1'b0;
           sample_count <= 0;
           sample <= 0;
+          features_loaded <= 1'b0;
         end
       else
         begin
@@ -69,30 +72,56 @@ end
                 begin
                   valid <= 1'b0;
                   sample_count <= 0;
+                  features_loaded <= 1'b1;
                 end
               else
                 begin
                   valid <= 1'b1;
+
                   sample_count <= sample_count + 1;
-                end
-
-
-              infile_status = $fscanf(infile, "%d", in_sample);
-              if (!$feof(infile))
-                begin
-                  sample <= in_sample;
-                end
-              if (out_valid == 1'b1)
-                begin
-                  $fwrite(outfile, "%d ", level);
-                  $fwrite(outfile, "%b",  path);
-                  $fwrite(outfile, "\n");
+                  if (out_valid == 1'b1)
+                    begin
+                      $fwrite(outfile, "%d ", level);
+                      $fwrite(outfile, "%b",  path);
+                      $fwrite(outfile, "\n");
+                      features_loaded <= 1'b0;
+  
+                      infile_status = $fscanf(infile, "%d", in_sample);
+                      if (!$feof(infile))
+                        begin
+                          samples[0] <= in_sample;
+                          sample     <= in_sample;
+                        end
+                    end
+                  else
+                    begin
+                      if (features_loaded == 1'b0)
+                        begin
+                          infile_status = $fscanf(infile, "%d", in_sample);
+                          if (!$feof(infile))
+                            begin
+                              samples[sample_count] <= in_sample;
+                              sample                <= in_sample;
+                            end
+                        end
+                      else
+                        begin
+                          sample <= samples[sample_count];
+                        end
+                    end
                 end
             end
           else
             begin
               valid <= 1'b0;
               sample_count <= sample_count;
+              if (out_valid == 1'b1)
+                begin
+                  features_loaded <= 1'b0;
+                  $fwrite(outfile, "%d ", level);
+                  $fwrite(outfile, "%b",  path);
+                  $fwrite(outfile, "\n");
+                end
             end
         end
     end

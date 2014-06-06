@@ -124,7 +124,8 @@ module control
   wire [COEFF_BIT_DEPTH-1      : 0] stored_coeff;
 
   assign ready      = ~reset
-                    & (is_zero_i | is_one_i | (feature_counter == 0));
+                    & (is_zero_i | is_one_i | (feature_counter == 0))
+                    & ~done;
   assign level      = final_depth;
   assign path       = path_i;
   assign out_valid  = done;
@@ -167,7 +168,6 @@ module control
         begin
           system_ready <= 1'b0;
           first_cycle <= 1'b1;
-          done        <= 1'b0;
 
           state <= STATE_DECIDE;
 
@@ -194,7 +194,6 @@ module control
                   if (child_valid == 1'b1)
                     begin
                       decision_counter <= decision_counter + 1;
-                      done  <= 1'b0;
                     end
                   else
                     begin
@@ -204,11 +203,6 @@ module control
                       if (first_cycle == 1'b1)
                         begin
                           first_cycle <= 1'b0;
-                          done        <= 1'b0;
-                        end
-                      else
-                        begin
-                          done        <= 1'b1;
                         end
                     end
 
@@ -219,8 +213,6 @@ module control
                   end
                 STATE_INDEX:
                   begin
-                    done  <= 1'b0;
-
                     is_one_shr[FEATURES-2 : 0] <= is_one_shr[FEATURES-1 : 1];
                     is_one_shr[FEATURES-1]     <= 1'b0;
 
@@ -258,14 +250,13 @@ module control
                   end
                 default:
                   begin
-                    done  <= 1'b0;
                     state <= STATE_DECIDE;
                   end
               endcase
         end
     end
 
-    always @(reset, state,
+    always @(reset, state, first_cycle,
              is_one_i, stored_coeff, 
              feature_counter, decision_counter,
              child_direction, child_flags, path_i)
@@ -279,6 +270,7 @@ module control
             mult_i     = 1'b0;
 
             child_valid = 1'b0;
+            done        = 1'b0;
           end
         else
           begin
@@ -298,6 +290,9 @@ module control
                   load_bias  = 1'b0;
                   add        = 1'b0;
                   mult_i     = 1'b0;
+
+                  done       = ~child_valid
+                             & ~first_cycle;
                 end
 
               STATE_INDEX:
@@ -314,6 +309,7 @@ module control
                   mult_i     = ~is_one_i 
                              & ~(stored_coeff == 0)
                              & (feature_counter != FEATURES);
+                  done       = 1'b0;
                 end
               default:
                 begin
@@ -321,6 +317,7 @@ module control
                   load_bias  = 1'b0;
                   add        = 1'b0;
                   mult_i     = 1'b0;
+                  done       = 1'b0;
                 end
             endcase
           end
