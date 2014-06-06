@@ -24,6 +24,11 @@ wire [1 : 0] path;
 wire         out_valid;
 reg          features_loaded = 1'b0;
 
+localparam STATE_IDLE   = 0
+         , STATE_WRITE  = 1
+         , STATE_RELOAD = 2;
+reg [1:0] state = STATE_IDLE;
+
 integer reset_counter = 0;
 
 initial
@@ -37,8 +42,8 @@ end
 
 initial
 begin
-  infile  = $fopen("D2_015.txt",       "r");
-  outfile = $fopen("diff_output.txt", "w");
+  infile  = $fopen("E1_02.txt",       "r");
+  outfile = $fopen("easy_output.txt", "w");
 end
 
   always @(posedge clk)
@@ -54,6 +59,29 @@ end
           reset <= 1'b1;
         end
     end
+
+/*
+  always @(posedge clk)
+    begin
+      if (reset == 1'b1)
+        begin
+          valid <= 1'b0;
+          sample_count    <= 0;
+          features_loaded <= 1'b0;
+          state           <= STATE_IDLE;
+        end
+      else
+        begin
+          case (state)
+            STATE_IDLE:
+              begin
+                state <= STATE_WRITE;
+              end
+            
+          endcase
+        end
+    end
+*/
 
   always @(posedge clk)
     begin
@@ -125,6 +153,7 @@ end
             end
         end
     end
+
 
   dtree
    #( .FEATURES    (3)

@@ -140,7 +140,7 @@ module dtree
   assign summand = (mult_en_register == 1'b1)
                    ? scaled_product
                    : ((is_one == 1'b1)
-                     ? sample
+                     ? {sample[IN_WIDTH-1], sample}
                      : summand_register
                      )
                    ;

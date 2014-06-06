@@ -6,10 +6,16 @@ def main(lfname, rfname):
   rf = open(rfname, "r")
   
   depth = 1
-  classes   = { 1 : (1, "00")
-              , 2 : (0, "01")
-              , 3 : (1, "01")
-              }
+# E1_02 dataset
+  classes = { 1 : (0, "00")
+            , 2 : (1, "11")
+            , 3 : (1, "10")
+            }
+# D2_015 dataset
+#  classes   = { 1 : (1, "00")
+#              , 2 : (0, "01")
+#              , 3 : (1, "01")
+#              }
   rindex    = 0
   i, errors = 0, 0
   for r in rf:

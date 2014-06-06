@@ -125,8 +125,8 @@ module control
 
   assign ready      = ~reset
                     & (is_zero_i | is_one_i | (feature_counter == 0))
-                    & ~done;
-  assign level      = final_depth;
+                    & ((feature_counter != 3) | child_valid);
+  assign level      = decision_counter;
   assign path       = path_i;
   assign out_valid  = done;
   assign mult       = mult_i;
@@ -197,7 +197,6 @@ module control
                     end
                   else
                     begin
-                      final_depth      <= decision_counter;
                       decision_counter <= 0;
 
                       if (first_cycle == 1'b1)

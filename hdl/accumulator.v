@@ -33,7 +33,7 @@ module accumulator
   wire       [IN_WIDTH   : 0] right_summand;
   wire       [IN_WIDTH+1 : 0] sum;
 
-  assign y = acc;
+  assign y = sum;
 
   always @(posedge clk)
     begin
@@ -53,7 +53,7 @@ module accumulator
   assign right_summand = (add  == 1'b1)
                        ? {a[IN_WIDTH-1], a} /* sign extension */
                        : {IN_WIDTH{1'b0}};
-  adder 
+  fast_adder 
    #( .IN_WIDTH (IN_WIDTH+1)
     )
    adder_instance
@@ -61,7 +61,6 @@ module accumulator
    , .b (right_summand) 
 
    , .y (sum)
-   , .v (overflow)
    );
 
 endmodule
