@@ -1,6 +1,6 @@
 module memory_model
  #( parameter DEPTH = 24
-  , parameter WORDS = 8
+  , parameter WORDS = 5
   )
   ( clk
   , reset

@@ -4,7 +4,7 @@ module control
   , parameter COEFF_BIT_DEPTH = 4
   , parameter BIAS_BIT_DEPTH  = 10
   , parameter MAX_CLUSTERS    = 5
-  , parameter CHANNEL_COUNT   = 16
+  , parameter CHANNEL_COUNT   = 1
   )
   ( clk
   , reset
@@ -124,8 +124,7 @@ module control
   wire [COEFF_BIT_DEPTH-1      : 0] stored_coeff;
 
   assign ready      = ~reset
-                    & (feature_counter != FEATURES-1);//(is_zero_i | is_one_i | (feature_counter == 0))
-                    //| (feature_counter == FEATURES);
+                    & (feature_counter != FEATURES-1);
   assign level      = decision_counter;
   assign path       = {path_i, child_direction}; /* truncate to LO bits */
   assign out_valid  = done;
@@ -138,9 +137,6 @@ module control
   memory_model
     #( .DEPTH           (24)
      , .WORDS           (MAX_CLUSTERS*CHANNEL_COUNT)
-     , .FEATURES        (FEATURES)
-     , .COEFF_BIT_DEPTH (COEFF_BIT_DEPTH)
-     , .BIAS_BIT_DEPTH  (BIAS_BIT_DEPTH)
      )
      mem_instance
      ( .clk   (clk)
@@ -232,7 +228,7 @@ module control
                               end 
                             else
                               begin
-                                node_index <= 3 + path_i[0];//path_i[decision_counter-1];
+                                node_index <= 3 + path_i[0];
                               end
                           end
                         else
