@@ -41,7 +41,7 @@ module memory_model
 
   initial
   begin
-    $readmemh("easy_tree.txt", coeff_memory);
+    $readmemh("easy_mult_tree.txt", coeff_memory);
   end
 
   always @(posedge clk)

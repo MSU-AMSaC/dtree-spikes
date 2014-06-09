@@ -119,15 +119,16 @@ module control
   reg  [FEATURES-1             : 0] is_one_shr  = 0;
   wire                              is_one_i;
   reg                               is_zero_i;
-  reg  [FEATURES-1             : 0] path_i      = 0;
+  reg  [$clog2(FEATURES)-2     : 0] path_i      = 0;
   wire [FEATURES-1             : 0] stored_one_pos;
   wire [COEFF_BIT_DEPTH-1      : 0] stored_coeff;
 
   assign ready      = ~reset
                     & (is_zero_i | is_one_i | (feature_counter == 0))
-                    & ((feature_counter != 3) | child_valid);
+                    | ((feature_counter == FEATURES) & ~child_valid);
+//                    & ((feature_counter != FEATURES) | child_valid);
   assign level      = decision_counter;
-  assign path       = path_i;
+  assign path       = {path_i, child_direction}; /* truncate to LO bits */
   assign out_valid  = done;
   assign mult       = mult_i;
 
@@ -178,6 +179,8 @@ module control
           decision_counter <= 0;
   
           final_depth      <= 0;
+
+          path_i           <= 0;
         end
       else
         begin
@@ -194,10 +197,12 @@ module control
                   if (child_valid == 1'b1)
                     begin
                       decision_counter <= decision_counter + 1;
+                      path_i <= {path_i, child_direction}; /* truncate to LO bits */
                     end
                   else
                     begin
                       decision_counter <= 0;
+                      path_i <= 0;
 
                       if (first_cycle == 1'b1)
                         begin
@@ -205,8 +210,7 @@ module control
                         end
                     end
 
-                    path_i[decision_counter] <= child_direction;
-                    is_one_shr               <= {1'b1, {(FEATURES-1){1'b0}}};
+                    is_one_shr <= {1'b1, {(FEATURES-1){1'b0}}};
 
                     feature_counter <= 0;
                   end
@@ -229,7 +233,7 @@ module control
                               end 
                             else
                               begin
-                                node_index <= 3 + path_i[decision_counter-1];
+                                node_index <= 3 + path_i[0];//path_i[decision_counter-1];
                               end
                           end
                         else

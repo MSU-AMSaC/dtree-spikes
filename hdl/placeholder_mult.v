@@ -12,7 +12,7 @@ module placeholder_mult
   input  wire signed [WIDTH_X-1 : 0] x;
   input  wire signed [WIDTH_A-1 : 0] a;
   
-  output wire signed [WIDTH_X + WIDTH_A : 0] y;
+  output wire signed [WIDTH_X + WIDTH_A-1 : 0] y;
 
   /* module body */
   reg  signed [WIDTH_X + WIDTH_A-1 : 0] product = 0;

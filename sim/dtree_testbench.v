@@ -42,8 +42,8 @@ end
 
 initial
 begin
-  infile  = $fopen("E1_02.txt",       "r");
-  outfile = $fopen("easy_output.txt", "w");
+  infile  = $fopen("easy_mult.txt",       "r");
+  outfile = $fopen("easy_mult_output.txt", "w");
 end
 
   always @(posedge clk)
@@ -59,29 +59,6 @@ end
           reset <= 1'b1;
         end
     end
-
-/*
-  always @(posedge clk)
-    begin
-      if (reset == 1'b1)
-        begin
-          valid <= 1'b0;
-          sample_count    <= 0;
-          features_loaded <= 1'b0;
-          state           <= STATE_IDLE;
-        end
-      else
-        begin
-          case (state)
-            STATE_IDLE:
-              begin
-                state <= STATE_WRITE;
-              end
-            
-          endcase
-        end
-    end
-*/
 
   always @(posedge clk)
     begin

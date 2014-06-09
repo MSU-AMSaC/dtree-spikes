@@ -49,14 +49,14 @@ module dtree
 
   wire                             mult_enable;
   reg                              mult_en_register = 1'b0;
-  wire[COEFF_WIDTH+IN_WIDTH   : 0] product;
-  wire[IN_WIDTH               : 0] scaled_product;
+  wire signed [COEFF_WIDTH+IN_WIDTH-1 : 0] product;
+  wire signed [IN_WIDTH-1             : 0] scaled_product;
   wire[IN_WIDTH+1             : 0] product_plus_sample;
   wire                             prod_plus_sample_overflow;
 
-  reg [IN_WIDTH               : 0] summand_register = 0;
-  wire[IN_WIDTH               : 0] summand;
-  wire[IN_WIDTH+1             : 0] total;
+  reg  signed [IN_WIDTH               : 0] summand_register = 0;
+  wire signed [IN_WIDTH               : 0] summand;
+  wire signed [IN_WIDTH+1             : 0] total;
   wire                             overflow;
 
   control
@@ -108,15 +108,14 @@ module dtree
             begin
               if (mult_enable == 1'b1)
                 begin
-                  multiplicand_register <= sample_register;
+                  multiplicand_register <= sample;
                 end
               else
                 begin
                   if (node_valid == 1'b1)
                     begin
                       /* sign extend */
-                      summand_register <= {sample_register[IN_WIDTH-1]
-                                          , sample_register};
+                      summand_register <= {sample[IN_WIDTH-1], sample};
                     end
                 end
             end
@@ -135,10 +134,10 @@ module dtree
 
     , .y     (product)
     );
-  assign scaled_product = product[IN_WIDTH+COEFF_WIDTH-1 -: IN_WIDTH];
+  assign scaled_product = product[IN_WIDTH+COEFF_WIDTH-2 -: IN_WIDTH];
 
   assign summand = (mult_en_register == 1'b1)
-                   ? scaled_product
+                   ? {scaled_product[IN_WIDTH-1], scaled_product}
                    : ((is_one == 1'b1)
                      ? {sample[IN_WIDTH-1], sample}
                      : summand_register
