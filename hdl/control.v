@@ -124,9 +124,8 @@ module control
   wire [COEFF_BIT_DEPTH-1      : 0] stored_coeff;
 
   assign ready      = ~reset
-                    & (is_zero_i | is_one_i | (feature_counter == 0))
-                    | ((feature_counter == FEATURES) & ~child_valid);
-//                    & ((feature_counter != FEATURES) | child_valid);
+                    & (feature_counter != FEATURES-1);//(is_zero_i | is_one_i | (feature_counter == 0))
+                    //| (feature_counter == FEATURES);
   assign level      = decision_counter;
   assign path       = {path_i, child_direction}; /* truncate to LO bits */
   assign out_valid  = done;

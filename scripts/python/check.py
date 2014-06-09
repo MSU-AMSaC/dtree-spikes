@@ -6,11 +6,16 @@ def main(lfname, rfname):
   rf = open(rfname, "r")
   
   depth = 1
-# E1_02 dataset
+# easy_mult dataset
   classes = { 1 : (0, "00")
-            , 2 : (1, "11")
-            , 3 : (1, "10")
+            , 2 : (1, "10")
+            , 3 : (1, "11")
             }
+# E1_02 dataset
+#  classes = { 1 : (0, "00")
+#            , 2 : (1, "11")
+#            , 3 : (1, "10")
+#            }
 # D2_015 dataset
 #  classes   = { 1 : (1, "00")
 #              , 2 : (0, "01")
@@ -18,18 +23,13 @@ def main(lfname, rfname):
 #              }
   rindex    = 0
   i, errors = 0, 0
-  for r in rf:
-    l = lf.readline()
-    if not l:
-      break
+  for l, r in itertools.izip(lf, rf):
     lclass = int(l.split()[-1])
-    for j in xrange(classes[lclass][0]):
-      lf.readline()
 
     rs = r.split()
     rdepth, rpath = int(rs[0]), rs[1]
-    rpath  = (rpath[(depth-rdepth):] + '0'*(depth-rdepth)) # rotate left
-    rpath  = rpath[::-1]                                   # reverse
+    rpath  = ('0'*(depth-rdepth) + rpath[(depth-rdepth):]) # rotate right
+    #rpath  = rpath[::-1]                                   # reverse
 
     try:
       if classes[lclass] != (rdepth, rpath):

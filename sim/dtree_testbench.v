@@ -120,17 +120,9 @@ end
             begin
               valid <= 1'b0;
               sample_count <= sample_count;
-              if (out_valid == 1'b1)
-                begin
-                  features_loaded <= 1'b0;
-                  $fwrite(outfile, "%d ", level);
-                  $fwrite(outfile, "%b",  path);
-                  $fwrite(outfile, "\n");
-                end
             end
         end
     end
-
 
   dtree
    #( .FEATURES    (3)
