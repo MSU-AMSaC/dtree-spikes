@@ -13,6 +13,7 @@ module memory_model
   , we
   , a
   , d
+  , q
   );
 
   input  wire clk;
@@ -21,7 +22,8 @@ module memory_model
   input  wire ce;
   input  wire we;
   input  wire[$clog2(WORDS)-1 : 0] a;
-  inout  wire[DEPTH-1         : 0] d;
+  input  wire[DEPTH-1         : 0] d;
+  output wire[DEPTH-1         : 0] q;
 
   reg [ 2                            /* indicates whether the child is present */
       + FEATURES                     /* one-hot encoded position of 1 coeff */
@@ -35,9 +37,7 @@ module memory_model
       + BIAS_BIT_DEPTH              
       : 0] data = 0;
 
-  assign d = ((ce == 1'b1) && (we == 1'b1))
-           ? {DEPTH{1'bZ}}
-           : data;
+  assign q = data;
 
   initial
   begin
