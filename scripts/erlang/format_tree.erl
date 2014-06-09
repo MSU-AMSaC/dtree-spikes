@@ -21,16 +21,16 @@ write_tree(Tree, Fname) ->
 build_tree() ->
   gb_trees:from_orddict(
     [ 
-    {1, #node{ left_child  = 0
-             , right_child = 1
-             , coeffs      = [0, 1, 0]
-             , bias        = -8
+    {1, #node{ left_child  = 1
+             , right_child = 0
+             , coeffs      = [0.5, 1, -0.5]
+             , bias        = 6
              }},
   
     {2, #node{ left_child  = 0
              , right_child = 0
              , coeffs      = [0, 0, 1]
-             , bias        = 0
+             , bias        = -18
              }},
     {3, #node{ left_child  = 0
              , right_child = 0
