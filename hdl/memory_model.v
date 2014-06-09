@@ -1,10 +1,6 @@
 module memory_model
  #( parameter DEPTH = 24
   , parameter WORDS = 8
-
-  , parameter FEATURES        = 3
-  , parameter COEFF_BIT_DEPTH = 4
-  , parameter BIAS_BIT_DEPTH  = 10
   )
   ( clk
   , reset
@@ -25,17 +21,8 @@ module memory_model
   input  wire[DEPTH-1         : 0] d;
   output wire[DEPTH-1         : 0] q;
 
-  reg [ 2                            /* indicates whether the child is present */
-      + FEATURES                     /* one-hot encoded position of 1 coeff */
-      + (FEATURES-1)*COEFF_BIT_DEPTH /* the other coefficients */
-      + BIAS_BIT_DEPTH               /* the bias weight */
-      : 0] coeff_memory [0 : WORDS-1];
-
-  reg [ 2                            
-      + FEATURES                     
-      + (FEATURES-1)*COEFF_BIT_DEPTH
-      + BIAS_BIT_DEPTH              
-      : 0] data = 0;
+  reg [DEPTH-1 : 0] coeff_memory [0 : WORDS-1];
+  reg [DEPTH-1 : 0] data = 0;
 
   assign q = data;
 
