@@ -42,8 +42,8 @@ end
 
 initial
 begin
-  infile  = $fopen("easy_mult.txt",       "r");
-  outfile = $fopen("easy_mult_output.txt", "w");
+  infile  = $fopen("E1_02.txt",       "r");
+  outfile = $fopen("E1_02_output.txt", "w");
 end
 
   always @(posedge clk)
