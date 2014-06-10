@@ -2,7 +2,7 @@
 module dtree
  #( parameter FEATURES      = 3
   , parameter IN_WIDTH      = 10
-  , parameter COEFF_WIDTH   = 4
+  , parameter COEFF_WIDTH   = 2
   , parameter BIAS_WIDTH    = 10
   , parameter MAX_CLUSTERS  = 5
   , parameter CHANNEL_COUNT = 1
@@ -79,10 +79,11 @@ module dtree
 
   wire                             mult_enable;
   reg                              mult_en_register = 1'b0;
+
   wire signed [COEFF_WIDTH+IN_WIDTH-1 : 0] product;
   wire signed [IN_WIDTH-1             : 0] scaled_product;
-  wire[IN_WIDTH+1             : 0] product_plus_sample;
-  wire                             prod_plus_sample_overflow;
+
+  wire        [IN_WIDTH-2             : 0] shifted;
 
   reg  signed [IN_WIDTH               : 0] summand_register = 0;
   wire signed [IN_WIDTH               : 0] summand;
@@ -206,17 +207,32 @@ module dtree
         end
     end
 
-  placeholder_mult
-   #( .WIDTH_X(IN_WIDTH)
-    , .WIDTH_A(COEFF_WIDTH)
-    )
-    multiply
-    ( .x     (multiplicand_register)
-    , .a     (coeff)
-
-    , .y     (product)
-    );
-  assign scaled_product = product[IN_WIDTH+COEFF_WIDTH-2 -: IN_WIDTH];
+  generate
+  if (COEFF_WIDTH > 2)
+    begin: GENERATE_SIGNED_MULTIPLY
+      placeholder_mult
+       #( .WIDTH_X(IN_WIDTH)
+        , .WIDTH_A(COEFF_WIDTH)
+        )
+        multiply
+        ( .x     (multiplicand_register)
+        , .a     (coeff)
+        , .y     (product)
+        );
+      assign scaled_product = product[IN_WIDTH+COEFF_WIDTH-2 -: IN_WIDTH];
+    end
+  else
+    begin: GENERATE_SIGNED_SHIFT
+      signed_div_2
+       #( .WIDTH (IN_WIDTH)
+        )
+        ( .x   (multiplicand_register)
+        , .sgn (coeff[COEFF_WIDTH-1])
+        , .y   (shifted)
+        );
+      assign scaled_product = {shifted[IN_WIDTH-2], shifted};
+    end
+  endgenerate
 
   assign summand = (mult_en_register == 1'b1)
                    ? {scaled_product[IN_WIDTH-1], scaled_product}
