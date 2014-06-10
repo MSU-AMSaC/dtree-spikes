@@ -3,7 +3,7 @@ module dtree
  #( parameter FEATURES      = 3
   , parameter IN_WIDTH      = 10
   , parameter COEFF_WIDTH   = 4
-  , parameter BIAS_WIDTH    = 4
+  , parameter BIAS_WIDTH    = 10
   , parameter MAX_CLUSTERS  = 5
   , parameter CHANNEL_COUNT = 1
   )
@@ -75,7 +75,7 @@ module dtree
   wire                             is_one;
   wire                             is_zero;
   reg                              is_one_register = 1'b0;
-  wire[IN_WIDTH-1             : 0] bias;
+  wire[BIAS_WIDTH-1           : 0] bias;
 
   wire                             mult_enable;
   reg                              mult_en_register = 1'b0;
