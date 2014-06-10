@@ -6,7 +6,7 @@ module dtree_testbench
   , parameter IN_WIDTH     = 10
   , parameter BIAS_WIDTH   = 10
   , parameter MAX_CLUSTERS = 5
-  , parameter CHANNELS     = 1
+  , parameter CHANNELS     = 4
 
   , parameter DUMP_INPUT   = 0
   );
@@ -38,9 +38,9 @@ wire [1 : 0] path;
 wire         out_valid;
 reg          features_loaded = 1'b0;
 
-reg  [NODE_SIZE-1 : 0]            nodes [0 : MAX_CLUSTERS-1];
+reg  [NODE_SIZE-1 : 0]            nodes [0 : (MAX_CLUSTERS*CHANNELS)-1];
 wire [NODE_SIZE-1 : 0]            node_data;
-reg  [$clog2(MAX_CLUSTERS)-1 : 0] node_counter;
+reg  [$clog2(MAX_CLUSTERS*CHANNELS)-1 : 0] node_counter;
 reg                               write_node = 1'b0;
 
 localparam STATE_WRITE_NODES = 0
@@ -104,7 +104,7 @@ end
                 sample <= 0;
                 features_loaded <= 1'b0;
 
-                if (node_counter == MAX_CLUSTERS-1)
+                if (node_counter == (MAX_CLUSTERS*CHANNELS)-1)
                   begin
                     state <= STATE_WRITE_DATA;
                     node_counter <= 0;

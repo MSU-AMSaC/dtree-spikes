@@ -163,7 +163,8 @@ module control
 
           state <= STATE_DECIDE;
 
-          node_index_i       <= 0;
+          ch_index_i       <= 0;
+          node_index_i     <= 0;
           coeff_index      <= 0;
 
           feature_counter  <= 0;
@@ -181,7 +182,8 @@ module control
 
               state <= STATE_DECIDE;
 
-              node_index_i       <= 0;
+              ch_index_i       <= 0;
+              node_index_i     <= 0;
               coeff_index      <= 0;
 
               feature_counter  <= 0;
@@ -216,6 +218,17 @@ module control
                       if (first_cycle == 1'b1)
                         begin
                           first_cycle <= 1'b0;
+                        end
+                      else
+                        begin
+                          if (ch_index_i == CHANNEL_COUNT-1)
+                            begin
+                              ch_index_i <= 0;
+                            end
+                          else
+                            begin
+                              ch_index_i <= ch_index_i + 1;
+                            end
                         end
                     end
 

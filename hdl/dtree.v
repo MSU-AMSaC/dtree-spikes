@@ -5,7 +5,7 @@ module dtree
   , parameter COEFF_WIDTH   = 2
   , parameter BIAS_WIDTH    = 10
   , parameter MAX_CLUSTERS  = 5
-  , parameter CHANNEL_COUNT = 1
+  , parameter CHANNEL_COUNT = 4
   )
   ( clk
   , reset
@@ -33,8 +33,8 @@ module dtree
   input  wire reset;
 
   input  wire                              wr_node;
-  input  wire [$clog2(MAX_CLUSTERS)-1 : 0] node_addr;
-  input  wire [NODE_SIZE-1            : 0] node_data_in;
+  input  wire [$clog2(CHANNEL_COUNT*MAX_CLUSTERS)-1 : 0] node_addr;
+  input  wire [NODE_SIZE-1                          : 0] node_data_in;
 
   input  wire                         in_valid;
   output wire                         ready;
@@ -68,7 +68,7 @@ module dtree
   wire [NODE_SIZE-1                          : 0] coeff_mem_q;
 
   reg                               node_mem_full = 1'b0;
-  reg  [$clog2(MAX_CLUSTERS)-1 : 0] node_counter  = 0;
+  reg  [$clog2(CHANNEL_COUNT*MAX_CLUSTERS)-1 : 0] node_counter  = 0;
 
   wire                             node_valid;
   wire[COEFF_WIDTH-1          : 0] coeff;
@@ -226,6 +226,7 @@ module dtree
       signed_div_2
        #( .WIDTH (IN_WIDTH)
         )
+        divide
         ( .x   (multiplicand_register)
         , .sgn (coeff[COEFF_WIDTH-1])
         , .y   (shifted)
