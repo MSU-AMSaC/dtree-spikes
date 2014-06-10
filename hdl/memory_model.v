@@ -19,35 +19,53 @@ module memory_model
   input  wire we;
   input  wire[$clog2(WORDS)-1 : 0] a;
   input  wire[DEPTH-1         : 0] d;
-  output wire[DEPTH-1         : 0] q;
+  output reg [DEPTH-1         : 0] q;
 
-  reg [DEPTH-1 : 0] coeff_memory [0 : WORDS-1];
-  reg [DEPTH-1 : 0] data = 0;
+  wire [DEPTH-1 : 0] coeff_memory [0 : WORDS-1];
+  reg  [DEPTH-1 : 0] data = 0;
 
-  assign q = data;
+  wire [WORDS-1 : 0] one_hot_address;
+  wire [WORDS-1 : 0] gated_clks;
 
-  initial
-  begin
-    $readmemh("easy_tree.txt", coeff_memory);
-  end
+  decoder
+   #( .WIDTH (WORDS)
+    )
+    decode_address
+    ( .encoded (a)
+    , .one_hot (one_hot_address)
+    );
+
+  genvar i;
+  generate
+  for (i = 0; i < WORDS; i = i + 1)
+    begin: GENERATE_MEMORY_CELLS
+      assign gated_clks[i] = clk & ce & one_hot_address[i];
+
+      memory_cell
+       #( .WIDTH (DEPTH)
+        )
+        node
+        ( .clk   (gated_clks[i])
+        , .reset (reset)
+
+        , .ce    (ce)
+        , .we    (we)
+        , .d     (d)
+        , .q     (coeff_memory[i])
+        );
+    end
+  endgenerate
 
   always @(posedge clk)
     begin
       if (reset == 1'b1)
         begin
-          data <= 0;
+          q <= 0;
         end
       else
         begin
-          if (ce == 1'b1)
-            begin
-              data <= coeff_memory[a];
-              if (we == 1'b1)
-                begin
-                  coeff_memory[a] <= d;
-                end
-            end
+          q <= coeff_memory[a];
         end
-    end
+   end
 
 endmodule

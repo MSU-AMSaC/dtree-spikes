@@ -7,15 +7,15 @@ def main(lfname, rfname):
   
   depth = 1
 # easy_mult dataset
-  classes = { 1 : (0, "00")
-            , 2 : (1, "10")
-            , 3 : (1, "11")
-            }
-# E1_02 dataset
 #  classes = { 1 : (0, "00")
-#            , 2 : (1, "11")
-#            , 3 : (1, "10")
+#            , 2 : (1, "10")
+#            , 3 : (1, "11")
 #            }
+# E1_02 dataset
+  classes = { 1 : (0, "00")
+            , 2 : (1, "11")
+            , 3 : (1, "10")
+            }
 # D2_015 dataset
 #  classes   = { 1 : (1, "00")
 #              , 2 : (0, "01")
@@ -29,7 +29,6 @@ def main(lfname, rfname):
     rs = r.split()
     rdepth, rpath = int(rs[0]), rs[1]
     rpath  = ('0'*(depth-rdepth) + rpath[(depth-rdepth):]) # rotate right
-    #rpath  = rpath[::-1]                                   # reverse
 
     try:
       if classes[lclass] != (rdepth, rpath):

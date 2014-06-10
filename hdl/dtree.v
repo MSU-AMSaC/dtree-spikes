@@ -1,11 +1,18 @@
 `default_nettype none
 module dtree
- #( parameter FEATURES    = 3
-  , parameter IN_WIDTH    = 10
-  , parameter COEFF_WIDTH = 4
+ #( parameter FEATURES      = 3
+  , parameter IN_WIDTH      = 10
+  , parameter COEFF_WIDTH   = 4
+  , parameter BIAS_WIDTH    = 4
+  , parameter MAX_CLUSTERS  = 5
+  , parameter CHANNEL_COUNT = 1
   )
   ( clk
   , reset
+
+  , wr_node
+  , node_addr
+  , node_data_in
 
   , in_valid
   , ready
@@ -16,8 +23,18 @@ module dtree
   , out_valid
   );
 
+  localparam NODE_SIZE = 2 +
+                         FEATURES +
+                         (FEATURES-1)*COEFF_WIDTH +
+                         BIAS_WIDTH +
+                         1;
+
   input  wire clk;
   input  wire reset;
+
+  input  wire                              wr_node;
+  input  wire [$clog2(MAX_CLUSTERS)-1 : 0] node_addr;
+  input  wire [NODE_SIZE-1            : 0] node_data_in;
 
   input  wire                         in_valid;
   output wire                         ready;
@@ -28,6 +45,7 @@ module dtree
   output wire                         out_valid;
   
   /* module body */
+  wire                         ccore_ready;
   reg                          data_valid = 1'b0;
   reg [$clog2(FEATURES)-1 : 0] cycle_counter = 0;
 
@@ -39,6 +57,18 @@ module dtree
 
   wire                             get_next_coeffs;
   wire                             child_direction;
+
+  wire [$clog2(CHANNEL_COUNT)-1 : 0] ch_index;
+  wire [$clog2(FEATURES)-1      : 0] node_index;
+  wire [NODE_SIZE-1             : 0] node_data_out;
+
+  wire                                            coeff_mem_ce;
+  wire                                            coeff_mem_we;
+  wire [$clog2(MAX_CLUSTERS*CHANNEL_COUNT)-1 : 0] coeff_mem_a;
+  wire [NODE_SIZE-1                          : 0] coeff_mem_q;
+
+  reg                               node_mem_full = 1'b0;
+  reg  [$clog2(MAX_CLUSTERS)-1 : 0] node_counter  = 0;
 
   wire                             node_valid;
   wire[COEFF_WIDTH-1          : 0] coeff;
@@ -59,22 +89,50 @@ module dtree
   wire signed [IN_WIDTH+1             : 0] total;
   wire                             overflow;
 
+  assign ready = ccore_ready & node_mem_full;
+ 
+  assign coeff_mem_a    = (node_mem_full == 1'b0)
+                        ? node_counter
+                        : ch_index*MAX_CLUSTERS + node_index;
+  memory_model
+    #( .DEPTH           (NODE_SIZE)
+     , .WORDS           (MAX_CLUSTERS*CHANNEL_COUNT)
+     )
+     mem_instance
+     ( .clk   (clk)
+     , .reset (reset)
+
+     , .ce    (coeff_mem_ce)
+     , .we    (wr_node)
+     , .a     (coeff_mem_a)
+     , .d     (node_data_in)
+     , .q     (node_data_out)
+     );
+
   control
-   #( .FEATURES        (3)
-    , .COEFF_BIT_DEPTH (4)
-    , .BIAS_BIT_DEPTH  (10)
+   #( .FEATURES      (FEATURES)
+    , .COEFF_WIDTH   (COEFF_WIDTH)
+    , .BIAS_WIDTH    (BIAS_WIDTH)
+    , .MAX_CLUSTERS  (MAX_CLUSTERS)
+    , .CHANNEL_COUNT (CHANNEL_COUNT)
     )
     controller
     ( .clk             (clk)
     , .reset           (reset)
   
+    , .mem_ready       (node_mem_full)
     , .in_valid        (data_valid)
     , .child_direction (child_direction)
 
-    , .ready           (ready)    
+    , .ccore_ready     (ccore_ready)    
     , .load_bias       (acc_load)
     , .add             (acc_add)
     , .mult            (mult_enable)
+
+    , .ch_index        (ch_index)
+    , .node_index      (node_index)
+    , .read_mem        (coeff_mem_ce)
+    , .node_data       (node_data_out)
 
     , .node_valid      (node_valid)
     , .coeff           (coeff)
@@ -92,35 +150,59 @@ module dtree
       if (reset == 1'b1)
         begin
           data_valid         <= 1'b0;
-          sample_register <= 0;
+          sample_register    <= 0;
           mult_en_register   <= 1'b0;
+
+          node_mem_full      <= 1'b0;
+          node_counter       <= 0;
         end
       else
         begin
-          data_valid         <= 1'b1;
-          mult_en_register   <= mult_enable;
-          if (in_valid == 1'b1)
+          if (node_mem_full == 1'b0)
             begin
-              sample_register <= sample;
-            end
-
-          if (is_zero == 1'b0)
-            begin
-              if (mult_enable == 1'b1)
+              if (wr_node == 1'b1)
                 begin
-                  multiplicand_register <= sample;
-                end
-              else
-                begin
-                  if (node_valid == 1'b1)
+                  if (node_counter == (MAX_CLUSTERS*CHANNEL_COUNT)-1)
                     begin
-                      /* sign extend */
-                      summand_register <= {sample[IN_WIDTH-1], sample};
+                      node_counter  <= 0;
+                      node_mem_full <= 1'b1;
+                    end
+                  else
+                    begin
+                      node_counter  <= node_counter + 1;
+                      node_mem_full <= 1'b0;
                     end
                 end
             end
-         
-          is_one_register <= is_one;
+          else
+            begin
+              node_mem_full <= 1'b1;
+
+              data_valid         <= 1'b1;
+              mult_en_register   <= mult_enable;
+              if (in_valid == 1'b1)
+                begin
+                  sample_register <= sample;
+                end
+
+              if (is_zero == 1'b0)
+                begin
+                  if (mult_enable == 1'b1)
+                    begin
+                      multiplicand_register <= sample;
+                    end
+                  else
+                    begin
+                      if (node_valid == 1'b1)
+                        begin
+                          /* sign extend */
+                          summand_register <= {sample[IN_WIDTH-1], sample};
+                        end
+                    end
+                end
+             
+              is_one_register <= is_one;
+            end
         end
     end
 
