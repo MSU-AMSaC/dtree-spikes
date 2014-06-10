@@ -141,7 +141,7 @@ module control
   assign out_valid  = done;
   assign mult       = mult_i;
 
-  assign read_mem   = 1'b1;
+  assign read_mem   = ~node_valid;
   assign node_index = node_index_i;
   assign ch_index   = ch_index_i;
 
