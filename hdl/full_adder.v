@@ -2,7 +2,7 @@ module full_adder
   ( a
   , b
   , c_in
-  
+
   , s
   , c_out
   );

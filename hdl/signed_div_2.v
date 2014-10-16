@@ -1,3 +1,8 @@
+/* signed_div_2.v
+ * Compute division by 2 using a right-shift, taking care of the sign bit.
+ * This enables us to multiply by a fractional 2-bit number without an
+ * actual multiplication circuit.
+ */
 module signed_div_2
  #( parameter WIDTH = 10
   )

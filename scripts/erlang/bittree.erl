@@ -1,3 +1,6 @@
+% bittree.erl
+% Routines to convert a tree of hyperplane coefficients into a bit-packed
+% format.
 -module(bittree).
 -export([flatten/2]).
 
@@ -19,10 +22,10 @@ flatten(#node{ left_child  = LChild
         CoeffRes) ->
   OnePos = one_hot_one_pos(Coeffs),
   FracCoeffs = [ X || X <- Coeffs, X /= 1],
-  Quantized  = lists:map(fun(X) -> round(X * (1 bsl (CoeffRes-1))) end, 
+  Quantized  = lists:map(fun(X) -> round(X * (1 bsl (CoeffRes-1))) end,
                          FracCoeffs),
   % io:write(io:format("~p", [Quantized])),
-  CoeffBits  = << << X:CoeffRes >> || X <- Quantized >>, 
+  CoeffBits  = << << X:CoeffRes >> || X <- Quantized >>,
   << LChild:1
    , RChild:1
    , OnePos/bitstring
@@ -33,4 +36,3 @@ flatten(#node{ left_child  = LChild
 flatten(Tree, CoeffRes) ->
   L = [ flatten(V, CoeffRes) || {_, V} <- gb_trees:to_list(Tree) ],
   << << X/bitstring >> || X <- L >>.
-

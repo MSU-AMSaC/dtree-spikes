@@ -1,3 +1,6 @@
+/* fast_adder.v
+ * Allow the synthesizer to generate a fast combinational adder.
+ */
 module fast_adder
 #( parameter IN_WIDTH = 8
   , parameter SIGNED   = 1'b1
