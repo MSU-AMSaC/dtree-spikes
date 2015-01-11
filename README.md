@@ -1,8 +1,8 @@
 This is a repository for source code associated with a signal processing
 research project at Michigan State University's Advanced Microsystems and
 Circuits (AMSaC) lab, homepage at http://www.egr.msu.edu/amsac.
-It consists of digital hardware (Verilog HDL) and testing/supplementary
-scripts (various languages) for a real-time neural action potential
+It consists of a software prototype/proof of concept (Matlab), digital hardware (Verilog HDL)
+and testing/supplementary scripts (various languages) for a real-time neural action potential
 classification algorithm, as described in the paper
 
 Y. Yang, C. S. Boling, A. J. Mason, "Power-area efficient VLSI implementation
